@@ -1,0 +1,9 @@
+# SpotiFilter - Spotify Playlist Manager
+# Author: Daniel Joy
+# Version: 1.0.18
+
+# Spotify Web API Python Library
+spotipy>=2.23.0
+
+# Environment Variable Management
+python-dotenv>=1.0.0
