@@ -5,7 +5,7 @@ creates filtered playlists based on specific genres or
 countries/regions.
 
 **Author:** Daniel Joy\
-**Version:** 1.0.18
+**Version:** 1.0.19
 
 ------------------------------------------------------------------------
 
