@@ -2,10 +2,10 @@
 SpotiFilter - Spotify Playlist Generator
 =======================================
 A tool to analyze your Spotify library and create filtered playlists
-based on genres or countries/regions.
+based on genres, countries/regions, or artists.
 
 Author: Daniel Joy
-Version: 1.0.18
+Version: 2.0.0
 """
 
 import spotipy
@@ -20,7 +20,7 @@ load_dotenv()
 class SpotifyPlaylistManager:
     """
     Manages Spotify playlist operations including fetching user data,
-    analyzing tracks, filtering by genre/country, and creating/updating playlists.
+    analyzing tracks, filtering by genre/country/artist, and creating/updating playlists.
     """
 
     def __init__(self):
@@ -272,7 +272,8 @@ class SpotifyPlaylistManager:
             raw_tracks[track_id] = {
                 'name': track['name'],
                 'uri': track['uri'],
-                'artist_ids': [a['id'] for a in track['artists'] if a.get('id')]
+                'artist_ids': [a['id'] for a in track['artists'] if a.get('id')],
+                'artist_names': [a['name'] for a in track['artists'] if a.get('name')]
             }
 
         if include_liked:
@@ -301,6 +302,7 @@ class SpotifyPlaylistManager:
             track_artists_map[track_id] = {
                 'name': t['name'],
                 'uri': t['uri'],
+                'artist_names': t['artist_names'],
                 'artists': []
             }
             for aid in t['artist_ids']:
@@ -320,7 +322,7 @@ class SpotifyPlaylistManager:
         
         Args:
             tracks_map (dict): The analyzed tracks mapping from analyze_tracks()
-            genre_keyword (str): Genre to search for (e.g., 'rock', 'edm')
+            genre_keyword (str): Genre to search for (e.g., 'amapiano', 'afrobeats')
             
         Returns:
             list: Filtered tracks with format:
@@ -358,20 +360,289 @@ class SpotifyPlaylistManager:
                 [{'uri': str, 'name': str, 'artist': str, 'genres': list}, ...]
         """
         country_keywords = {
-            'japan':        ['j-pop', 'j-rock', 'japanese', 'anime', 'city pop'],
-            'japanese':     ['j-pop', 'j-rock', 'japanese', 'anime', 'city pop'],
-            'korea':        ['k-pop', 'k-rap', 'korean'],
-            'korean':       ['k-pop', 'k-rap', 'korean'],
-            'france':       ['french', 'chanson', 'variete'],
-            'french':       ['french', 'chanson', 'variete'],
-            'brazil':       ['brazilian', 'samba', 'bossa nova', 'mpb'],
-            'brazilian':    ['brazilian', 'samba', 'bossa nova', 'mpb'],
-            'spain':        ['spanish', 'flamenco', 'latin'],
-            'spanish':      ['spanish', 'flamenco', 'latin'],
-            'uk':           ['british', 'uk'],
-            'british':      ['british', 'uk'],
-            'usa':          ['american'],
-            'american':     ['american'],
+
+            # == AFRICA ========================================================
+            # Pan-African / Afro umbrella
+            'africa':           ['afrobeats', 'afropop', 'afro pop', 'afroswing',
+                                 'afro swing', 'afro soul', 'afrofusion', 'afro fusion',
+                                 'afro house', 'afro dancehall', 'afrorave',
+                                 'afrobeat',  # Fela Kuti classic tag
+                                 'african'],
+            'african':          ['afrobeats', 'afropop', 'afro pop', 'afroswing',
+                                 'afro swing', 'afro soul', 'afrofusion', 'afro fusion',
+                                 'afro house', 'afro dancehall', 'afrorave',
+                                 'afrobeat', 'african'],
+
+            # Nigeria
+            'nigeria':          ['afrobeats', 'afropop', 'afro pop', 'naija',
+                                 'nigerian', 'afrorave', 'afrofusion', 'afro fusion',
+                                 'highlife', 'afroswing', 'afrobeat'],
+            'nigerian':         ['afrobeats', 'afropop', 'afro pop', 'naija',
+                                 'nigerian', 'afrorave', 'afrofusion', 'afro fusion',
+                                 'highlife', 'afroswing', 'afrobeat'],
+
+            # South Africa
+            'south africa':     ['amapiano', 'gqom', 'afro house', 'kwaito',
+                                 'south african', 'sa hip hop', 'maskandi',
+                                 'bubblegum', 'afropop'],
+            'south african':    ['amapiano', 'gqom', 'afro house', 'kwaito',
+                                 'south african', 'sa hip hop', 'maskandi',
+                                 'bubblegum', 'afropop'],
+            'amapiano':         ['amapiano'],
+            'gqom':             ['gqom'],
+
+            # Ghana
+            'ghana':            ['highlife', 'hiplife', 'azonto', 'ghanaian',
+                                 'afrobeats', 'afropop'],
+            'ghanaian':         ['highlife', 'hiplife', 'azonto', 'ghanaian',
+                                 'afrobeats', 'afropop'],
+
+            # Tanzania / East Africa
+            'tanzania':         ['bongo flava', 'bongo', 'tanzanian', 'east african'],
+            'east africa':      ['bongo flava', 'afropop', 'benga', 'taarab',
+                                 'east african'],
+
+            # Kenya
+            'kenya':            ['kenyan', 'genge', 'benga', 'afropop', 'east african'],
+            'kenyan':           ['kenyan', 'genge', 'benga', 'afropop', 'east african'],
+
+            # Senegal / West Africa
+            'senegal':          ['mbalax', 'senegalese', 'wolof', 'west african'],
+            'west africa':      ['mbalax', 'afrobeats', 'afropop', 'highlife',
+                                 'palm wine', 'west african'],
+
+            # Cameroon
+            'cameroon':         ['bikutsi', 'makossa', 'cameroonian', 'afropop'],
+            'cameroonian':      ['bikutsi', 'makossa', 'cameroonian', 'afropop'],
+
+            # Congo / DRC
+            'congo':            ['soukous', 'congolese', 'rumba', 'ndombolo',
+                                 'afro rumba'],
+            'congolese':        ['soukous', 'congolese', 'rumba', 'ndombolo',
+                                 'afro rumba'],
+
+            # Ethiopia
+            'ethiopia':         ['ethiopian', 'ethio jazz', 'afropop'],
+            'ethiopian':        ['ethiopian', 'ethio jazz', 'afropop'],
+
+            # Zimbabwe / Southern Africa
+            'zimbabwe':         ['zimbabwean', 'chimurenga', 'afropop'],
+            'southern africa':  ['amapiano', 'kwaito', 'gqom', 'afro house',
+                                 'chimurenga', 'mbaqanga'],
+
+            # North Africa / Maghreb
+            'north africa':     ['rai', 'chaabi', 'gnawa', 'shaabi', 'arabic',
+                                 'moroccan', 'algerian', 'tunisian', 'north african'],
+            'morocco':          ['moroccan', 'gnawa', 'chaabi', 'rai', 'amazigh'],
+            'moroccan':         ['moroccan', 'gnawa', 'chaabi', 'rai', 'amazigh'],
+            'algeria':          ['algerian', 'rai', 'chaabi', 'kabyle'],
+            'algerian':         ['algerian', 'rai', 'chaabi', 'kabyle'],
+            'egypt':            ['egyptian', 'shaabi', 'arabic pop', 'arabic'],
+            'egyptian':         ['egyptian', 'shaabi', 'arabic pop', 'arabic'],
+
+            # == ASIA ==========================================================
+            # Japan
+            'japan':            ['j-pop', 'j-rock', 'japanese', 'anime', 'city pop',
+                                 'j-hip hop', 'j-indie', 'visual kei', 'enka', 'shibuya-kei'],
+            'japanese':         ['j-pop', 'j-rock', 'japanese', 'anime', 'city pop',
+                                 'j-hip hop', 'j-indie', 'visual kei', 'enka', 'shibuya-kei'],
+
+            # South Korea
+            'korea':            ['k-pop', 'k-rap', 'korean', 'k-indie', 'k-hip hop',
+                                 'k-rnb', 'trot'],
+            'korean':           ['k-pop', 'k-rap', 'korean', 'k-indie', 'k-hip hop',
+                                 'k-rnb', 'trot'],
+
+            # India
+            'india':            ['bollywood', 'indian', 'hindi', 'punjabi', 'bhangra',
+                                 'carnatic', 'hindustani', 'filmi', 'desi', 'kollywood',
+                                 'tollywood', 'tamil', 'telugu', 'malayalam'],
+            'indian':           ['bollywood', 'indian', 'hindi', 'punjabi', 'bhangra',
+                                 'carnatic', 'hindustani', 'filmi', 'desi', 'kollywood',
+                                 'tollywood', 'tamil', 'telugu', 'malayalam'],
+
+            # Pakistan
+            'pakistan':         ['pakistani', 'punjabi', 'qawwali', 'ghazal',
+                                 'sufi', 'desi'],
+            'pakistani':        ['pakistani', 'punjabi', 'qawwali', 'ghazal',
+                                 'sufi', 'desi'],
+
+            # China
+            'china':            ['chinese', 'mandopop', 'c-pop', 'cantopop',
+                                 'chinese classical'],
+            'chinese':          ['chinese', 'mandopop', 'c-pop', 'cantopop'],
+
+            # Philippines
+            'philippines':      ['opm', 'filipino', 'p-pop', 'philippine'],
+            'filipino':         ['opm', 'filipino', 'p-pop', 'philippine'],
+
+            # Indonesia
+            'indonesia':        ['indonesian', 'dangdut', 'pop indonesia'],
+            'indonesian':       ['indonesian', 'dangdut', 'pop indonesia'],
+
+            # Thailand
+            'thailand':         ['thai', 't-pop', 'luk thung', 'mor lam'],
+            'thai':             ['thai', 't-pop', 'luk thung', 'mor lam'],
+
+            # Vietnam
+            'vietnam':          ['v-pop', 'vietnamese', 'bolero vietnam'],
+            'vietnamese':       ['v-pop', 'vietnamese'],
+
+            # Turkey
+            'turkey':           ['turkish', 'arabesk', 'halk muzigi', 'turkish pop'],
+            'turkish':          ['turkish', 'arabesk', 'halk muzigi', 'turkish pop'],
+
+            # Iran
+            'iran':             ['iranian', 'persian', 'persian pop'],
+            'iranian':          ['iranian', 'persian', 'persian pop'],
+            'persian':          ['persian', 'iranian', 'persian pop'],
+
+            # == MIDDLE EAST ===================================================
+            'middle east':      ['arabic', 'khaleeji', 'levantine', 'arabic pop',
+                                 'arabic hip hop', 'gulf', 'middle eastern'],
+            'arabic':           ['arabic', 'arabic pop', 'arabic hip hop', 'khaleeji',
+                                 'levantine', 'gulf'],
+            'saudi arabia':     ['khaleeji', 'arabic', 'arabic pop', 'gulf'],
+            'gulf':             ['khaleeji', 'gulf', 'arabic pop'],
+            'lebanon':          ['lebanese', 'arabic pop', 'levantine'],
+            'lebanese':         ['lebanese', 'arabic pop', 'levantine'],
+
+            # == EUROPE ========================================================
+            # UK
+            'uk':               ['british', 'uk', 'garage', 'uk garage', 'grime',
+                                 'drum and bass', 'dnb', 'afroswing', 'uk drill',
+                                 'britpop', 'uk hip hop'],
+            'british':          ['british', 'uk', 'garage', 'uk garage', 'grime',
+                                 'drum and bass', 'dnb', 'afroswing', 'uk drill',
+                                 'britpop', 'uk hip hop'],
+
+            # France
+            'france':           ['french', 'chanson', 'variete', 'french pop',
+                                 'french hip hop', 'french house', 'electro francais'],
+            'french':           ['french', 'chanson', 'variete', 'french pop',
+                                 'french hip hop', 'french house', 'electro francais'],
+
+            # Germany
+            'germany':          ['german', 'deutsch', 'schlager', 'neue deutsche welle',
+                                 'krautrock', 'german hip hop', 'techno'],
+            'german':           ['german', 'deutsch', 'schlager', 'neue deutsche welle',
+                                 'krautrock', 'german hip hop', 'techno'],
+
+            # Spain
+            'spain':            ['spanish', 'flamenco', 'latin', 'reggaeton espanol',
+                                 'rumba catalana', 'spanish pop'],
+            'spanish':          ['spanish', 'flamenco', 'latin', 'reggaeton espanol',
+                                 'rumba catalana', 'spanish pop'],
+
+            # Italy
+            'italy':            ['italian', 'canzone', 'italo disco', 'italian pop',
+                                 'opera', 'italian hip hop'],
+            'italian':          ['italian', 'canzone', 'italo disco', 'italian pop',
+                                 'opera', 'italian hip hop'],
+
+            # Portugal
+            'portugal':         ['fado', 'portuguese', 'pimba', 'portuguese pop'],
+            'portuguese':       ['fado', 'portuguese', 'pimba', 'portuguese pop'],
+
+            # Netherlands
+            'netherlands':      ['dutch', 'nederlandstalig', 'dutch pop', 'dutch hip hop'],
+            'dutch':            ['dutch', 'nederlandstalig', 'dutch pop', 'dutch hip hop'],
+
+            # Scandinavia
+            'scandinavia':      ['scandinavian', 'nordic', 'swedish', 'norwegian',
+                                 'danish', 'finnish'],
+            'sweden':           ['swedish', 'swedish pop', 'scandinavian'],
+            'swedish':          ['swedish', 'swedish pop', 'scandinavian'],
+            'norway':           ['norwegian', 'scandinavian'],
+            'norwegian':        ['norwegian', 'scandinavian'],
+            'denmark':          ['danish', 'scandinavian'],
+            'danish':           ['danish', 'scandinavian'],
+            'finland':          ['finnish', 'suomi pop', 'scandinavian'],
+            'finnish':          ['finnish', 'suomi pop', 'scandinavian'],
+
+            # Russia
+            'russia':           ['russian', 'russki', 'russian pop'],
+            'russian':          ['russian', 'russki', 'russian pop'],
+
+            # Eastern Europe
+            'eastern europe':   ['balkan', 'slavic', 'romanian', 'bulgarian',
+                                 'serbian', 'polish', 'czech', 'hungarian'],
+            'balkans':          ['balkan', 'turbofolk', 'serbian', 'balkan brass',
+                                 'gypsy'],
+            'romania':          ['romanian', 'manele'],
+            'romanian':         ['romanian', 'manele'],
+            'poland':           ['polish', 'polski rap'],
+            'polish':           ['polish', 'polski rap'],
+            'greece':           ['greek', 'laiko', 'rebetiko', 'entechno'],
+            'greek':            ['greek', 'laiko', 'rebetiko', 'entechno'],
+
+            # == AMERICAS =====================================================
+            # USA
+            'usa':              ['american'],
+            'american':         ['american'],
+
+            # Brazil
+            'brazil':           ['brazilian', 'samba', 'bossa nova', 'mpb',
+                                 'funk carioca', 'funk brasileiro', 'pagode',
+                                 'axe', 'forro', 'sertanejo', 'baile funk',
+                                 'tropicalia'],
+            'brazilian':        ['brazilian', 'samba', 'bossa nova', 'mpb',
+                                 'funk carioca', 'funk brasileiro', 'pagode',
+                                 'axe', 'forro', 'sertanejo', 'baile funk',
+                                 'tropicalia'],
+
+            # Colombia
+            'colombia':         ['colombian', 'cumbia', 'vallenato', 'currulao',
+                                 'mapalé', 'latin'],
+            'colombian':        ['colombian', 'cumbia', 'vallenato', 'latin'],
+
+            # Mexico
+            'mexico':           ['mexican', 'mariachi', 'ranchera', 'banda',
+                                 'norteño', 'corrido', 'cumbia', 'latin'],
+            'mexican':          ['mexican', 'mariachi', 'ranchera', 'banda',
+                                 'norteño', 'corrido', 'cumbia', 'latin'],
+
+            # Argentina
+            'argentina':        ['argentinian', 'tango', 'folklore argentino',
+                                 'cumbia villera', 'latin'],
+            'argentinian':      ['argentinian', 'tango', 'folklore argentino', 'latin'],
+
+            # Cuba
+            'cuba':             ['cuban', 'salsa', 'son cubano', 'mambo', 'bolero',
+                                 'timba', 'rumba cubana'],
+            'cuban':            ['cuban', 'salsa', 'son cubano', 'mambo', 'bolero',
+                                 'timba', 'rumba cubana'],
+
+            # Puerto Rico / Reggaeton
+            'puerto rico':      ['reggaeton', 'latin trap', 'dembow', 'latin urban',
+                                 'puerto rican', 'salsa'],
+            'reggaeton':        ['reggaeton', 'latin trap', 'dembow', 'latin urban'],
+
+            # Dominican Republic
+            'dominican republic': ['bachata', 'merengue', 'dominican', 'dembow'],
+            'dominican':        ['bachata', 'merengue', 'dominican', 'dembow'],
+
+            # Jamaica
+            'jamaica':          ['reggae', 'dancehall', 'ska', 'rocksteady',
+                                 'jamaican', 'dub'],
+            'jamaican':         ['reggae', 'dancehall', 'ska', 'rocksteady',
+                                 'jamaican', 'dub'],
+
+            # Trinidad
+            'trinidad':         ['soca', 'calypso', 'trinidadian', 'chutney'],
+            'trinidadian':      ['soca', 'calypso', 'trinidadian', 'chutney'],
+
+            # Chile
+            'chile':            ['chilean', 'cueca', 'latin'],
+            'chilean':          ['chilean', 'cueca', 'latin'],
+
+            # Peru
+            'peru':             ['peruvian', 'cumbia peruana', 'chicha', 'latin'],
+            'peruvian':         ['peruvian', 'cumbia peruana', 'chicha', 'latin'],
+
+            # == OCEANIA =======================================================
+            'australia':        ['australian', 'australian hip hop', 'oz hip hop'],
+            'australian':       ['australian', 'australian hip hop', 'oz hip hop'],
         }
 
         search_terms = country_keywords.get(country_keyword.lower(), [country_keyword.lower()])
@@ -382,6 +653,37 @@ class SpotifyPlaylistManager:
             for artist in track_info['artists']:
                 if any(any(term in genre.lower() for term in search_terms)
                        for genre in artist['genres']):
+                    if track_id not in seen_track_ids:
+                        filtered_tracks.append({
+                            'uri': track_info['uri'],
+                            'name': track_info['name'],
+                            'artist': artist['name'],
+                            'genres': artist['genres']
+                        })
+                        seen_track_ids.add(track_id)
+                    break
+
+        return filtered_tracks
+
+    def filter_by_artist(self, tracks_map, artist_keyword):
+        """
+        Filter tracks by artist name (case-insensitive partial match).
+        
+        Args:
+            tracks_map (dict): The analyzed tracks mapping from analyze_tracks()
+            artist_keyword (str): Artist name (or partial name) to search for
+            
+        Returns:
+            list: Filtered tracks with format:
+                [{'uri': str, 'name': str, 'artist': str, 'genres': list}, ...]
+        """
+        filtered_tracks = []
+        artist_keyword = artist_keyword.lower()
+        seen_track_ids = set()
+
+        for track_id, track_info in tracks_map.items():
+            for artist in track_info['artists']:
+                if artist_keyword in artist['name'].lower():
                     if track_id not in seen_track_ids:
                         filtered_tracks.append({
                             'uri': track_info['uri'],
@@ -539,7 +841,7 @@ def handle_filter_result(manager, filtered_tracks, filter_label, default_name):
     Args:
         manager (SpotifyPlaylistManager): The playlist manager instance
         filtered_tracks (list): List of filtered track objects
-        filter_label (str): Label describing the filter (genre or country)
+        filter_label (str): Label describing the filter (genre, country, or artist)
         default_name (str): Default name for the playlist
     """
     if not filtered_tracks:
@@ -611,16 +913,25 @@ def main():
             print("\n" + "=" * 60)
             print("MAIN MENU")
             print("=" * 60)
-            print("1. Filter by GENRE (e.g., edm, rock, hip-hop)")
-            print("2. Filter by COUNTRY/REGION (e.g., japan, korea, france)")
-            print("3. Change analyzed sources")
-            print("4. Exit")
+            print("1. Filter by GENRE")
+            print("   (e.g., amapiano, afrobeats, afropop, gqom, afro house,")
+            print("    kwaito, afroswing, highlife, edm, rock, hip-hop, jazz)")
+            print("2. Filter by COUNTRY/REGION")
+            print("   (e.g., nigeria, south africa, ghana, kenya, morocco,")
+            print("    japan, korea, france, brazil, colombia, jamaica)")
+            print("3. Filter by ARTIST")
+            print("   (e.g., Burna Boy, Wizkid, Davido, Asake, Rema)")
+            print("4. Change analyzed sources")
+            print("5. Exit")
 
-            choice = input("\nChoose an option (1-4): ").strip()
+            choice = input("\nChoose an option (1-5): ").strip()
 
             if choice == '1':
-                print("\n📊 Genre examples: edm, rock, pop, hip-hop, jazz, metal, indie, classical")
-                genre = input("Enter genre to search for: ").strip()
+                print("\n🎵 Afro genres: amapiano, afrobeats, afropop, gqom, afro house,")
+                print("               kwaito, highlife, afroswing, bongo flava, afrofusion")
+                print("🎵 Other genres: edm, rock, pop, hip-hop, jazz, metal, indie, r&b,")
+                print("               reggaeton, dancehall, samba, cumbia, classical")
+                genre = input("\nEnter genre to search for: ").strip()
                 if not genre:
                     print("❌ Invalid genre")
                     continue
@@ -628,8 +939,13 @@ def main():
                 handle_filter_result(manager, filtered, genre, f"{genre.upper()} Mix")
 
             elif choice == '2':
-                print("\n🌍 Country examples: japan, korea, france, brazil, spain, usa, uk")
-                country = input("Enter country to search for: ").strip()
+                print("\n🌍 Africa:   nigeria, south africa, ghana, kenya, tanzania,")
+                print("             senegal, congo, ethiopia, morocco, egypt")
+                print("🌍 Asia:     japan, korea, india, china, philippines, indonesia")
+                print("🌍 Americas: brazil, colombia, mexico, jamaica, puerto rico")
+                print("🌍 Europe:   france, uk, germany, spain, italy, portugal")
+                print("🌍 Middle East: arabic, lebanon, gulf")
+                country = input("\nEnter country/region to search for: ").strip()
                 if not country:
                     print("❌ Invalid country")
                     continue
@@ -637,6 +953,14 @@ def main():
                 handle_filter_result(manager, filtered, country, f"{country.title()} Music")
 
             elif choice == '3':
+                artist = input("\n🎤 Enter artist name (or partial name): ").strip()
+                if not artist:
+                    print("❌ Invalid artist name")
+                    continue
+                filtered = manager.filter_by_artist(tracks_map, artist)
+                handle_filter_result(manager, filtered, artist, f"{artist.title()} Collection")
+
+            elif choice == '4':
                 include_liked, selected_playlists = manager.select_sources()
                 if not include_liked and not selected_playlists:
                     print("❌ No sources selected.")
@@ -645,7 +969,7 @@ def main():
                 if not tracks_map:
                     print("❌ No tracks found in selected sources.")
 
-            elif choice == '4':
+            elif choice == '5':
                 print("\n👋 Goodbye!")
                 break
 
