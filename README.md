@@ -50,7 +50,7 @@ countries/regions.
 
 ``` bash
 git clone https://github.com/Danieljucke/SpotiFilter.git
-cd spotifilter
+cd SpotiFilter
 ```
 
 ### 2. Install Dependencies
@@ -170,7 +170,6 @@ python playlist_generator.py
 ``` text
 spotifilter/
 ├── playlist_generator.py
-├── .env
 ├── .env.example
 ├── requirements.txt
 └── .gitignore
@@ -191,9 +190,8 @@ SpotiFilter looks for specific keywords within Spotify's genre metadata:
 
 ## License
 
-This project is for personal use. Please adhere to the Spotify Developer
-Terms of Service.
+This project is licensed under the [MIT License](LICENSE).
 
-------------------------------------------------------------------------
+Use of Spotify data and APIs remains subject to the
+[Spotify Developer Terms](https://developer.spotify.com/terms).
 
-Enjoy your automated playlists!
